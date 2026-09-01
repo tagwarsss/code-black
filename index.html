@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Connection Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">?</div>
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Gallery</a></li>
+      <li><a href="#" id="loginNavBtn">Login</a></li>
+      <li class="account-menu" id="accountMenu" style="display:none;">
+        <a href="#" id="accountNavBtn">Account</a>
+        <div class="account-dropdown" id="accountDropdown">
+          <a href="#" id="logoutBtn">Log Out</a>
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <section id="home" class="section active">
+    <div class="container">
+      <h1>Supabase Connection</h1>
+      <button id="checkConnectionBtn">Check Connection</button>
+      <div id="status"></div>
+    </div>
+  </section>
+
+  <section id="gallery" class="section">
+    <div class="container">
+      <h1></h1>
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </div>
+  </section>
+
+  <button class="upload-btn" aria-label="Upload">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 16H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="upload-panel" id="uploadPanel">
+    <div class="upload-header">
+      <span>Upload Picture</span>
+      <button class="upload-close" aria-label="Close upload">&times;</button>
+    </div>
+    <div class="upload-body">
+      <input type="file" id="uploadFileInput" accept="image/*" multiple />
+      <div class="upload-file-list" id="uploadFileList"></div>
+      <div class="upload-meta">
+        <span class="upload-count" id="uploadCount">0/3</span>
+        <button class="upload-submit" id="uploadSubmit">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-panel">
+      <button class="auth-close" id="authClose" aria-label="Close">&times;</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+      <div class="auth-content">
+        <form class="auth-form active" id="loginForm">
+          <input type="text" class="auth-input" id="loginUsername" placeholder="Username" required />
+          <div class="password-wrap">
+            <input type="password" class="auth-input" id="loginPassword" placeholder="Password" required />
+            <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Show password">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C4 7 8 4 12 4C16 4 20 7 22 12C20 17 16 20 12 20C8 20 4 17 2 12Z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C4 7 8 4 12 4C16 4 20 7 22 12C20 17 16 20 12 20C8 20 4 17 2 12Z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <button type="submit" class="auth-submit">Login</button>
+        </form>
+        <form class="auth-form" id="registerForm">
+          <input type="email" class="auth-input" id="regEmail" placeholder="Email" required />
+          <div class="password-wrap">
+            <input type="password" class="auth-input" id="regPassword" placeholder="Password" required />
+            <button type="button" class="password-toggle" data-target="regPassword" aria-label="Show password">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C4 7 8 4 12 4C16 4 20 7 22 12C20 17 16 20 12 20C8 20 4 17 2 12Z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C4 7 8 4 12 4C16 4 20 7 22 12C20 17 16 20 12 20C8 20 4 17 2 12Z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <button type="submit" class="auth-submit" id="registerSubmitBtn">Register</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="index.js"></script>
+</body>
+</html>
