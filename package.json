@@ -1,0 +1,12 @@
+{
+  "name": "code-black",
+  "version": "1.0.0",
+  "description": "Supabase-powered instax photo gallery",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

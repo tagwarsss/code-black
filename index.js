@@ -3,6 +3,16 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM loaded");
   console.log("Script loaded");
 
+  document
+    .querySelectorAll(".nav-links a")
+    .forEach((a) => {
+      if (
+        a.textContent.trim().toLowerCase() === "home"
+      ) {
+        a.classList.add("active");
+      }
+    });
+
   // =====================================================
   // SUPABASE
   // =====================================================
@@ -60,6 +70,12 @@ document
 
       e.preventDefault();
 
+      document
+        .querySelectorAll(".nav-links a")
+        .forEach((a) => a.classList.remove("active"));
+
+      link.classList.add("active");
+
       const target =
         link.textContent
           .trim()
@@ -114,6 +130,15 @@ document
   const logoutBtn =
     document.getElementById("logoutBtn");
 
+  const profileBtn =
+    document.getElementById("profileBtn");
+
+  const profileOverlay =
+    document.getElementById("profileOverlay");
+
+  const profileClose =
+    document.getElementById("profileClose");
+
   const loginNavBtn =
     document.getElementById("loginNavBtn");
 
@@ -121,21 +146,28 @@ document
   const showAccountMenu = () => {
 
     if (loginNavBtn)
-      loginNavBtn.style.display = "none";
+      loginNavBtn.parentElement.style.display = "none";
 
-    if (accountMenu)
+    if (accountMenu) {
       accountMenu.style.display = "";
+      accountNavBtn.classList.add("active");
+    }
 
   };
 
 
   const showLoginLink = () => {
 
-    if (loginNavBtn)
-      loginNavBtn.style.display = "";
+    if (loginNavBtn) {
+      loginNavBtn.parentElement.style.display = "";
+      loginNavBtn.classList.add("active");
+    }
 
-    if (accountMenu)
+    if (accountMenu) {
       accountMenu.style.display = "none";
+      if (accountNavBtn)
+        accountNavBtn.classList.remove("active");
+    }
 
     if (accountDropdown)
       accountDropdown.classList.remove("open");
@@ -231,6 +263,147 @@ document
   }
 
 
+  if (profileBtn) {
+
+    profileBtn.addEventListener("click", (e) => {
+
+      e.preventDefault();
+
+      if (accountDropdown)
+        accountDropdown.classList.remove("open");
+
+      if (profileOverlay)
+        profileOverlay.classList.add("open");
+
+    });
+
+  }
+
+
+  if (profileClose) {
+
+    profileClose.addEventListener("click", () => {
+
+      if (profileOverlay)
+        profileOverlay.classList.remove("open");
+
+    });
+
+  }
+
+
+  if (profileOverlay) {
+
+    profileOverlay.addEventListener("click", (e) => {
+
+      if (e.target === profileOverlay)
+        profileOverlay.classList.remove("open");
+
+    });
+
+  }
+
+
+  // -----------------------------------------------------
+  // PROFILE TABS
+  // -----------------------------------------------------
+  const profileNavItems = document.querySelectorAll(".profile-nav-item");
+  const profileTabs = document.querySelectorAll(".profile-tab");
+
+  profileNavItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const tabId = item.getAttribute("data-tab");
+      profileNavItems.forEach((nav) => nav.classList.remove("active"));
+      profileTabs.forEach((tab) => tab.classList.remove("active"));
+      item.classList.add("active");
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add("active");
+      if (tabId === "uploadsTab") {
+        console.log("Uploads tab clicked, loading uploads...");
+        loadUserUploads();
+      }
+    });
+  });
+
+
+  let uploadsLoadId = 0;
+
+  const loadUserUploads = async () => {
+    const grid = document.getElementById("profileUploadsGrid");
+    if (!grid) return;
+
+    const thisLoadId = ++uploadsLoadId;
+
+    const { data: sessionData } = await sb.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId || thisLoadId !== uploadsLoadId) return;
+
+    const { data: records, error: dbError } = await sb
+      .from("instax")
+      .select("image_path")
+      .eq("user_id", userId);
+
+    if (dbError || thisLoadId !== uploadsLoadId) return;
+
+    grid.innerHTML = "";
+
+    for (const record of records) {
+      if (thisLoadId !== uploadsLoadId) return;
+
+      const { data: urlData, error: urlError } = await sb.storage
+        .from("images")
+        .createSignedUrl(record.image_path, 3600);
+
+      if (urlError || thisLoadId !== uploadsLoadId) continue;
+
+      const item = document.createElement("div");
+      item.className = "profile-upload-item";
+      const img = document.createElement("img");
+      img.src = urlData.signedUrl;
+      img.alt = record.image_path;
+      item.appendChild(img);
+      grid.appendChild(item);
+    }
+  };
+
+
+  // -----------------------------------------------------
+  // CHANGE PASSWORD
+  // -----------------------------------------------------
+  const passwordForm = document.getElementById("passwordForm");
+
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById("currentPassword").value;
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (newPassword !== confirmPassword) {
+        showToast("New passwords do not match");
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showToast("Password must be at least 6 characters");
+        return;
+      }
+
+      try {
+        const { error } = await sb.auth.updateUser({ password: newPassword });
+        if (error) {
+          showToast(error.message);
+          return;
+        }
+        showToast("Password updated successfully");
+        passwordForm.reset();
+      } catch (err) {
+        showToast("Failed to update password");
+      }
+    });
+  }
+
+
   // -----------------------------------------------------
   // INITIAL SESSION CHECK
   // -----------------------------------------------------
@@ -247,88 +420,8 @@ document
 
 
   // =====================================================
-  // SUPABASE CONNECTION TEST
-  // =====================================================
-
-  const checkConnectionBtn =
-    document.getElementById(
-      "checkConnectionBtn"
-    );
-
-  if (checkConnectionBtn) {
-
-    checkConnectionBtn.addEventListener(
-      "click",
-      async () => {
-
-        const statusEl =
-          document.getElementById("status");
-
-        if (!statusEl) return;
-
-        statusEl.textContent =
-          "Checking...";
-
-        statusEl.className = "";
-
-        try {
-
-          const {
-            data,
-            error
-          } = await sb.auth.getSession();
-
-          if (error) {
-
-            console.error(
-              "Supabase connection error:",
-              error
-            );
-
-            statusEl.textContent =
-              "Error: " + error.message;
-
-            statusEl.className =
-              "error";
-
-            return;
-          }
-
-          console.log(
-            "Supabase session:",
-            data.session
-          );
-
-          statusEl.textContent =
-            "Connected to Supabase Auth!";
-
-          statusEl.className =
-            "success";
-
-        } catch (err) {
-
-          console.error(
-            "Connection failed:",
-            err
-          );
-
-          statusEl.textContent =
-            "Connection failed";
-
-          statusEl.className =
-            "error";
-        }
-
-      }
-    );
-
-  }
-
-
-  // =====================================================
   // UPLOAD SYSTEM
   // =====================================================
-
   (function () {
 
     const uploadBtn =
@@ -2058,7 +2151,7 @@ document
 
           const emailInput =
             document.getElementById(
-              "loginUsername"
+              "loginEmail"
             );
 
           const passwordInput =
